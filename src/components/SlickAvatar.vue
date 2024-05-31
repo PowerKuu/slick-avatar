@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, watchEffect } from "vue"
+import { computed, ref, watch, watchEffect } from "vue"
 
 // Place widgets in this folder(public) and name them as `widgetType/widgetName.svg`
 const widgetsPath = "/slick-avatar"
@@ -27,14 +27,18 @@ type Widget<T extends WidgetType> = typeof widgets[T][number]
 type Person = {
     [K in WidgetType]: {
         color: string
-        widget: Widget<K> 
+        widget: Widget<K>
+        disabled?: boolean
     }
 }
+
+export type PersonProp = Person | null
 
 const widgetType = Object.keys(widgets) as WidgetType[]
 
 const props = defineProps<{
-    modelValue: Person | null
+    modelValue: PersonProp
+    size?: number
 }>()
 
 const emit = defineEmits<{
@@ -71,6 +75,7 @@ function getRandomWidget<T extends WidgetType>(widgetType: T): Widget<T> {
 function getRandomPerson(): Person {
     const isBlackRace = randomItem([true, false] as const)
     const hasSpecialHair = randomItem([false, false, true] as const)
+    const hasEarrings = randomItem([false, false, true] as const)
 
     const blackSkinColor = [
         "#D2B48C", // Tan
@@ -141,6 +146,10 @@ function getRandomPerson(): Person {
         person.top.color = hairColor
     }
 
+    if (!hasEarrings) {
+        person.earrings.disabled = true
+    }
+
     return person
 }
 
@@ -149,10 +158,15 @@ async function getPersonSVG(person: Person): Promise<Record<WidgetType, {
     svg: string
 }>> {
     const personSVG = await Promise.all(widgetType.map(async (widgetType) => {
+        const personWidgetType = person[widgetType]
+
+        const getSVG = () => getWidgetSVG(widgetType, personWidgetType.widget)
+
         const svg = [widgetType, {
-            color: person[widgetType].color,
-            svg: await getWidgetSVG(widgetType, person[widgetType].widget)
+            color: personWidgetType.color,
+            svg: personWidgetType.disabled ? "" : await getSVG()
         }]
+
         return svg
     }))
 
@@ -161,9 +175,12 @@ async function getPersonSVG(person: Person): Promise<Record<WidgetType, {
 
 
 const svgContent = ref<string | null>(null)
-const avatarSize = ref(100)
+const size = computed<number>(() => props.size || 100)
 
 watchEffect(async () => {
+    // Use effect
+    size.value
+
     if (!props.modelValue) return null
 
     const personWithSVG = await getPersonSVG(props.modelValue)
@@ -173,8 +190,8 @@ watchEffect(async () => {
         const color = personWithSVG.color
 
         const content = svg
-            .slice(svg.indexOf('>', svg.indexOf('<svg')) + 1)
-            .replace('</svg>', '')
+            .slice(svg.indexOf(">", svg.indexOf("<svg")) + 1)
+            .replace("</svg>", "")
             .replace(/\$fillColor/g, color)
 
         return `
@@ -186,15 +203,15 @@ watchEffect(async () => {
 
     svgContent.value = `
         <svg
-            width="${avatarSize.value}"
-            height="${avatarSize.value}"
-            viewBox="0 0 ${avatarSize.value / 0.7} ${avatarSize.value / 0.7}"
+            width="${size.value}"
+            height="${size.value}"
+            viewBox="0 0 400 400"
             preserveAspectRatio="xMidYMax meet"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
         >
             <g transform="translate(100, 65)">
-                ${svgRawList.join('')}
+                ${svgRawList.join("")}
             </g>
         </svg>
     `
@@ -206,8 +223,8 @@ watchEffect(async () => {
         ref="avatarRef"
         class="vue-color-avatar"
         :style="{
-            width: `${avatarSize}px`,
-            height: `${avatarSize}px`,
+            width: `${size}px`,
+            height: `${size}px`,
         }"
     >
         <div class="avatar-payload" v-html="svgContent" />

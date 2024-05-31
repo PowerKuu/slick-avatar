@@ -1,14 +1,10 @@
 <script setup lang="ts">
 import { ref } from "vue"
-import SlickAvatar from "./components/SlickAvatar.vue"
+import SlickAvatar, { type PersonProp } from "./components/SlickAvatar.vue"
 
-const person = ref(null)
+const person = ref<PersonProp>(null)
 </script>
 
 <template>
-  <SlickAvatar v-model="person"/>
+  <SlickAvatar :size="500" v-model="person"/>
 </template>
-
-<style scoped lang="scss">
-
-</style>
