@@ -7,4 +7,5 @@ const person = ref<PersonProp>(null)
 
 <template>
   <SlickAvatar :size="500" v-model="person"/>
+  <button @click="person = null">Regenerate</button>
 </template>
