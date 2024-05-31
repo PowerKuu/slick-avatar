@@ -35,6 +35,7 @@ type Person = {
 export type PersonProp = Person | null
 
 const widgetType = Object.keys(widgets) as WidgetType[]
+const widgetCache = new Map<string, string>()
 
 const props = defineProps<{
     modelValue: PersonProp
@@ -55,13 +56,17 @@ watch(() => props.modelValue, (person) => {
 async function getWidgetSVG<T extends WidgetType>(widgetType: T, widget: Widget<T>) {
     const path = `${widgetsPath}/${widgetType}/${widget}.svg?raw`
 
+    if (widgetCache.has(path)) return widgetCache.get(path)
+
     const response = await fetch(path).catch(() => null)
 
-    if (!response?.ok) {
-        throw new Error(`Failed to fetch ${path}`)
-    }
+    if (!response?.ok) throw new Error(`Failed to fetch ${path}`)
 
-    return response.text()
+    const text = await response.text()
+
+    widgetCache.set(path, text)
+
+    return text
 }
 
 function randomItem<T extends ArrayLike<any>>(array: T): T[number] {
@@ -76,6 +81,8 @@ function getRandomPerson(): Person {
     const isBlackRace = randomItem([true, false] as const)
     const hasSpecialHair = randomItem([false, false, true] as const)
     const hasEarrings = randomItem([false, false, true] as const)
+    const hasGlasses = randomItem([false, false, true] as const)
+    const hasTop = randomItem([true, true, true, true, false] as const)
 
     const blackSkinColor = [
         "#D2B48C", // Tan
@@ -146,9 +153,9 @@ function getRandomPerson(): Person {
         person.top.color = hairColor
     }
 
-    if (!hasEarrings) {
-        person.earrings.disabled = true
-    }
+    person.earrings.disabled = !hasEarrings
+    person.glasses.disabled = !hasGlasses
+    person.top.disabled = !hasTop
 
     return person
 }

@@ -1,8 +1,9 @@
 # Slick-avatar
 
 Create avatars with one single component. Random or self made avatars.
+Just copy ![SlickAvatars.vue](/src/components/SlickAvatar.vue) and the widgets!
 
-![image description](/showcase.gif)
+![showcase](/showcase.gif)
 
 ## So simple and slick 😎
 ```vue
