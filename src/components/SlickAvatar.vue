@@ -200,6 +200,10 @@ watchEffect(async () => {
             .slice(svg.indexOf(">", svg.indexOf("<svg")) + 1)
             .replace("</svg>", "")
             .replace(/\$fillColor/g, color)
+            // Replace all `url(#...)` with `url(#...${avatarID})`
+            .replace(/url\(#(.*?)\)/g, `url(#$1-${avatarID})`)
+            // Replace all `id="..."` with `id="...${avatarID}"`
+            .replace(/id=\"(.*?)\"/g, `id="$1-${avatarID}"`)
 
         return `
             <g id="vue-color-avatar-${widget}">
